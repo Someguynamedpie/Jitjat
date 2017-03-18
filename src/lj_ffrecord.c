@@ -341,15 +341,15 @@ static void LJ_FASTCALL recff_tonumber(jit_State *J, RecordFFData *rd)
       return;
     }
   }
-  if (tref_isnumber_str(tr)) {
-    if (tref_isstr(tr)) {
-      TValue tmp;
-      if (!lj_strscan_num(strV(&rd->argv[0]), &tmp)) {
-	recff_nyiu(J, rd);  /* Would need an inverted STRTO for this case. */
-	return;
-      }
-      tr = emitir(IRTG(IR_STRTO, IRT_NUM), tr, 0);
+  if (tref_isnumber(tr)) {
+    /* nop */
+  } else if (tref_isstr(tr)) {
+    TValue tmp;
+    if (!lj_strscan_num(strV(&rd->argv[0]), &tmp)) {
+      recff_nyiu(J, rd);  /* Would need an inverted STRTO for this case. */
+      return;
     }
+    tr = emitir(IRTG(IR_STRTO, IRT_NUM), tr, 0);
 #if LJ_HASFFI
   } else if (tref_iscdata(tr)) {
     lj_crecord_tonumber(J, rd);
