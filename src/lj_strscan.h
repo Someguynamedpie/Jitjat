@@ -7,6 +7,7 @@
 #define _LJ_STRSCAN_H
 
 #include "lj_obj.h"
+#include "lj_vm.h"
 
 /* Options for accepted/returned formats. */
 #define STRSCAN_OPT_TOINT	0x01  /* Convert to int32_t, if possible. */
@@ -33,7 +34,7 @@ LJ_FUNC int LJ_FASTCALL lj_strscan_number(GCstr *str, TValue *o);
 /* Check for number or convert string to number/int in-place (!). */
 static LJ_AINLINE int lj_strscan_numberobj(TValue *o)
 {
-  return tvisnumber(o) || (tvisstr(o) && lj_strscan_number(strV(o), o));
+  return tvisnumber(o) || (cvt2num(o) && lj_strscan_number(strV(o), o));
 }
 
 #endif

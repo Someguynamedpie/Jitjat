@@ -16,6 +16,7 @@
 #include "lj_cconv.h"
 #include "lj_cdata.h"
 #include "lj_carith.h"
+#include "lj_vm.h"
 #include "lj_strscan.h"
 
 /* -- C data arithmetic --------------------------------------------------- */
@@ -335,7 +336,7 @@ uint64_t lj_carith_check64(lua_State *L, int narg, CTypeID *id)
     lj_cconv_ct_ct(cts, ctype_get(cts, *id), s,
 		   (uint8_t *)&x, sp, CCF_ARG(narg));
     return x;
-  } else if (!(tvisstr(o) && lj_strscan_number(strV(o), o))) {
+  } else if (!(cvt2num(o) && lj_strscan_number(strV(o), o))) {
     goto err;
   }
   if (LJ_LIKELY(tvisint(o))) {
