@@ -113,6 +113,13 @@ XCFLAGS=
 # Enable GC64 mode for x64.
 #XCFLAGS+= -DLUAJIT_ENABLE_GC64
 #
+# LUA_NOCVTN2S/LUA_NOCVTS2N control how LuaJIT performs some
+# coercions. Define LUA_NOCVTN2S to turn off automatic coercion from
+# numbers to strings. Define LUA_NOCVTS2N to turn off automatic
+# coercion from strings to numbers.
+#XCFLAGS+= -DLUA_NOCVTN2S
+#XCFLAGS+= -DLUA_NOCVTS2N
+#
 ##############################################################################
 
 ##############################################################################

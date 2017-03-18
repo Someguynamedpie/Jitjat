@@ -8,6 +8,19 @@
 
 #include "lj_obj.h"
 
+#if !defined(LUA_NOCVTN2S)
+#define cvt2str(o)	tvisnumber(o)
+#else
+#define cvt2str(o)	0	/* no conversion from numbers to strings */
+#endif
+
+#if !defined(LUA_NOCVTS2N)
+#define cvt2num(o)	tvisstr(o)
+#else
+#define cvt2num(o)	0	/* no conversion from strings to numbers */
+#endif
+
+
 /* Entry points for ASM parts of VM. */
 LJ_ASMF void lj_vm_call(lua_State *L, TValue *base, int nres1);
 LJ_ASMF int lj_vm_pcall(lua_State *L, TValue *base, int nres1, ptrdiff_t ef);
