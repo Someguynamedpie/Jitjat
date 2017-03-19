@@ -34,6 +34,12 @@
 #include "lj_dispatch.h"
 #include "lj_vm.h"
 
+#ifdef LUA_NOCVTS2N
+#define tref_isnumber_str	tref_isnumber
+#else
+#define tref_isnumber_str(tr)	(tref_isnumber((tr)) || tref_isstr((tr)))
+#endif
+
 /* Some local macros to save typing. Undef'd at the end. */
 #define IR(ref)			(&J->cur.ir[(ref)])
 

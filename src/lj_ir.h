@@ -506,7 +506,6 @@ typedef uint32_t TRef;
 #define tref_istruecond(tr)	(!tref_typerange((tr), IRT_NIL, IRT_FALSE))
 #define tref_isinteger(tr)	(tref_typerange((tr), IRT_I8, IRT_INT))
 #define tref_isnumber(tr)	(tref_typerange((tr), IRT_NUM, IRT_INT))
-#define tref_isnumber_str(tr)	(tref_isnumber((tr)) || tref_isstr((tr)))
 #define tref_isgcv(tr)		(tref_typerange((tr), IRT_STR, IRT_UDATA))
 
 #define tref_isk(tr)		(irref_isk(tref_ref((tr))))

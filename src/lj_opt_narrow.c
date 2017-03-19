@@ -466,8 +466,10 @@ TRef LJ_FASTCALL lj_opt_narrow_index(jit_State *J, TRef tr)
 /* Narrow conversion to integer operand (overflow undefined). */
 TRef LJ_FASTCALL lj_opt_narrow_toint(jit_State *J, TRef tr)
 {
+#ifndef LUA_NOCVTS2N
   if (tref_isstr(tr))
     tr = emitir(IRTG(IR_STRTO, IRT_NUM), tr, 0);
+#endif
   if (tref_isnum(tr))  /* Conversion may be narrowed, too. See above. */
     return emitir(IRTI(IR_CONV), tr, IRCONV_INT_NUM|IRCONV_ANY);
   if (!tref_isinteger(tr))
@@ -482,8 +484,10 @@ TRef LJ_FASTCALL lj_opt_narrow_toint(jit_State *J, TRef tr)
 /* Narrow conversion to bitop operand (overflow wrapped). */
 TRef LJ_FASTCALL lj_opt_narrow_tobit(jit_State *J, TRef tr)
 {
+#ifndef LUA_NOCVTS2N
   if (tref_isstr(tr))
     tr = emitir(IRTG(IR_STRTO, IRT_NUM), tr, 0);
+#endif
   if (tref_isnum(tr))  /* Conversion may be narrowed, too. See above. */
     return emitir(IRTI(IR_TOBIT), tr, lj_ir_knum_tobit(J));
   if (!tref_isinteger(tr))
@@ -521,9 +525,11 @@ static int numisint(lua_Number n)
 static TRef conv_str_tonum(jit_State *J, TRef tr, TValue *o)
 {
   if (tref_isstr(tr)) {
+#ifndef LUA_NOCVTS2N
     tr = emitir(IRTG(IR_STRTO, IRT_NUM), tr, 0);
     /* Would need an inverted STRTO for this rare and useless case. */
     if (!lj_strscan_num(strV(o), o))  /* Convert in-place. Value used below. */
+#endif
       lj_trace_err(J, LJ_TRERR_BADTYPE);  /* Punt if non-numeric. */
   }
   return tr;

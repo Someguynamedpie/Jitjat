@@ -407,9 +407,11 @@ void lj_ir_kvalue(lua_State *L, TValue *tv, const IRIns *ir)
 TRef LJ_FASTCALL lj_ir_tonumber(jit_State *J, TRef tr)
 {
   if (!tref_isnumber(tr)) {
+#ifndef LUA_NOCVTS2N
     if (tref_isstr(tr))
       tr = emitir(IRTG(IR_STRTO, IRT_NUM), tr, 0);
     else
+#endif
       lj_trace_err(J, LJ_TRERR_BADTYPE);
   }
   return tr;
@@ -421,8 +423,10 @@ TRef LJ_FASTCALL lj_ir_tonum(jit_State *J, TRef tr)
   if (!tref_isnum(tr)) {
     if (tref_isinteger(tr))
       tr = emitir(IRTN(IR_CONV), tr, IRCONV_NUM_INT);
+#ifndef LUA_NOCVTS2N
     else if (tref_isstr(tr))
       tr = emitir(IRTG(IR_STRTO, IRT_NUM), tr, 0);
+#endif
     else
       lj_trace_err(J, LJ_TRERR_BADTYPE);
   }
@@ -433,10 +437,14 @@ TRef LJ_FASTCALL lj_ir_tonum(jit_State *J, TRef tr)
 TRef LJ_FASTCALL lj_ir_tostr(jit_State *J, TRef tr)
 {
   if (!tref_isstr(tr)) {
+#ifndef LUA_NOCVTN2S
     if (!tref_isnumber(tr))
+#endif
       lj_trace_err(J, LJ_TRERR_BADTYPE);
+#ifndef LUA_NOCVTN2S
     tr = emitir(IRT(IR_TOSTR, IRT_STR), tr,
 		tref_isnum(tr) ? IRTOSTR_NUM : IRTOSTR_INT);
+#endif
   }
   return tr;
 }
