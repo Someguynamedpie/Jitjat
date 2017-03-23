@@ -57,6 +57,18 @@ double lj_vm_foldarith(double x, double y, int op)
   }
 }
 
+int64_t lj_vm_foldbitwise(int64_t x, int64_t y, int op)
+{
+  switch (op) {
+  case IR_BAND - IR_BAND: return x&y; break;
+  case IR_BOR  - IR_BAND: return x|y; break;
+  case IR_BXOR - IR_BAND: return x^y; break;
+  case IR_BSHL - IR_BAND: return x<<y; break;
+  case IR_BSHR - IR_BAND: return x>>y; break;
+  default: return x;
+  }
+}
+
 #if (LJ_HASJIT && !(LJ_TARGET_ARM || LJ_TARGET_ARM64 || LJ_TARGET_PPC)) || LJ_TARGET_MIPS
 int32_t LJ_FASTCALL lj_vm_modi(int32_t a, int32_t b)
 {
