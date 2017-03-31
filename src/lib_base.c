@@ -409,11 +409,6 @@ LJLIB_CF(load)
   return load_aux(L, status, 4);
 }
 
-LJLIB_CF(loadstring)
-{
-  return lj_cf_load(L);
-}
-
 LJLIB_CF(dofile)
 {
   GCstr *fname = lj_lib_optstr(L, 1);
