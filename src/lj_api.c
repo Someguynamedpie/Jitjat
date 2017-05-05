@@ -330,6 +330,44 @@ LUA_API int lua_lessthan(lua_State *L, int idx1, int idx2)
   }
 }
 
+static int lua_lessequal(lua_State *L, int idx1, int idx2)
+{
+  cTValue *o1 = index2adr(L, idx1);
+  cTValue *o2 = index2adr(L, idx2);
+  if (o1 == niltv(L) || o2 == niltv(L)) {
+    return 0;
+  } else if (tvisint(o1) && tvisint(o2)) {
+    return intV(o1) <= intV(o2);
+  } else if (tvisnumber(o1) && tvisnumber(o2)) {
+    return numberVnum(o1) <= numberVnum(o2);
+  } else {
+    TValue *base = lj_meta_comp(L, o1, o2, 1);
+    if ((uintptr_t)base <= 1) {
+      return (int)(uintptr_t)base;
+    } else {
+      L->top = base+2;
+      lj_vm_call(L, base, 1+1);
+      L->top -= 2+LJ_FR2;
+      return tvistruecond(L->top+1+LJ_FR2);
+    }
+  }
+}
+
+LUA_API int lua_compare (lua_State *L, int index1, int index2, int op)
+{
+  switch (op) {
+    case LUA_OPEQ:
+      return lua_equal(L, index1, index2);
+    case LUA_OPLT:
+      return lua_lessthan(L, index1, index2);
+    case LUA_OPLE:
+      return lua_lessequal(L, index1, index2);
+    default:
+      api_check(L, 0);
+      return 0;
+  }
+}
+
 LUA_API lua_Number lua_tonumber(lua_State *L, int idx)
 {
   cTValue *o = index2adr(L, idx);

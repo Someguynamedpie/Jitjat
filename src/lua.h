@@ -352,6 +352,10 @@ LUA_API const lua_Number *lua_version (lua_State *L);
 LUA_API void lua_copy (lua_State *L, int fromidx, int toidx);
 LUA_API lua_Number lua_tonumberx (lua_State *L, int idx, int *isnum);
 LUA_API lua_Integer lua_tointegerx (lua_State *L, int idx, int *isnum);
+LUA_API int lua_compare (lua_State *L, int idx1, int idx2, int op);
+#define LUA_OPEQ	0
+#define LUA_OPLT	1
+#define LUA_OPLE	2
 
 /* From Lua 5.3. */
 LUA_API int lua_isyieldable (lua_State *L);
