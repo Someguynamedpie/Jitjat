@@ -20,7 +20,27 @@ local function usage(arg)
 		  " [-o buildvm_libbc.h] lib_*.c\n")
   os.exit(1)
 end
-
+local function tremove(t, pos)
+    --CHECK_tab(t)
+    local len = #t
+    if pos == nil then
+      if len ~= 0 then
+	local old = t[len]
+	t[len] = nil
+	return old
+      end
+    else
+      --CHECK_int(pos)
+      if pos >= 1 and pos <= len then
+	local old = t[pos]
+	for i=pos+1,len do
+	  t[i-1] = t[i]
+	end
+	t[len] = nil
+	return old
+      end
+    end
+  end
 local function parse_arg(arg)
   local outfile = "-"
   if not (arg and arg[1]) then
@@ -29,8 +49,8 @@ local function parse_arg(arg)
   if arg[1] == "-o" then
     outfile = arg[2]
     if not outfile then usage(arg) end
-    table.remove(arg, 1)
-    table.remove(arg, 1)
+    tremove(arg, 1)
+    tremove(arg, 1)
   end
   return outfile
 end
@@ -62,6 +82,7 @@ end
 
 local function read_uleb128(p)
   local v = p[0]; p = p + 1
+  
   if v >= 128 then
     local sh = 7; v = v - 128
     repeat
@@ -85,7 +106,6 @@ for i=0,#bcnames/6-1 do
 end
 local xop, xra = isbe and 3 or 0, isbe and 2 or 1
 local xrc, xrb = isbe and 1 or 2, isbe and 0 or 3
-
 local function fixup_dump(dump, fixup)
   local buf = ffi.new("uint8_t[?]", #dump+1, dump)
   local p = buf+5
@@ -188,10 +208,14 @@ local function write_file(name, data)
     assert(fp:close())
   end
 end
-
+print'starting'
 local outfile = parse_arg(arg)
+print'reading files'
 local src = read_files(arg)
+print'finding defs'
 local defs = find_defs(src)
+print'genning header'
 local hdr = gen_header(defs)
+print'saving'
 write_file(outfile, hdr)
 

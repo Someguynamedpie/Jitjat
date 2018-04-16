@@ -139,6 +139,7 @@ ERRDEF(XPARAM,	"<name> or " LUA_QL("...") " expected")
 ERRDEF(XAMBIG,	"ambiguous syntax (function call x new statement)")
 #endif
 ERRDEF(XFUNARG,	"function arguments expected")
+ERRDEF(XLAMBDAMALFORMED, "malformed lambda expression")
 ERRDEF(XSYMBOL,	"unexpected symbol")
 ERRDEF(XDOTS,	"cannot use " LUA_QL("...") " outside a vararg function")
 ERRDEF(XSYNTAX,	"syntax error")

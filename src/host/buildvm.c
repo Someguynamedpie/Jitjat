@@ -443,7 +443,7 @@ int main(int argc, char **argv)
 
   UNUSED(argc);
   parseargs(ctx, argv);
-
+  
   if ((status = build_code(ctx))) {
     fprintf(stderr,"Error: DASM error %08x\n", status);
     return 1;

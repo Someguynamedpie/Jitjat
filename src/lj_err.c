@@ -455,7 +455,7 @@ LJ_FUNCA int lj_err_unwind_win(EXCEPTION_RECORD *rec,
     /* Unwind internal frames. */
     err_unwind(L, cf, errcode);
   } else {
-    void *cf2 = err_unwind(L, cf, 0);
+	    void *cf2 = err_unwind(L, cf, 0);
     if (cf2) {  /* We catch it, so start unwinding the upper frames. */
       if (rec->ExceptionCode == LJ_MSVC_EXCODE ||
 	  rec->ExceptionCode == LJ_GCC_EXCODE) {

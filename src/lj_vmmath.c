@@ -54,20 +54,26 @@ double lj_vm_foldarith(double x, double y, int op)
   case IR_MIN - IR_ADD: return x > y ? y : x; break;
   case IR_MAX - IR_ADD: return x < y ? y : x; break;
 #endif
+  case IR_BAND - IR_ADD: return (int64_t)x&(int64_t)y; break;
+  case IR_BOR - IR_ADD: return (int64_t)x | (int64_t)y; break;
+  case IR_BXOR - IR_ADD: return (int64_t)x^ (int64_t)y; break;
+  case IR_BSHL - IR_ADD: return (int64_t)x << (int64_t)y; break;
+  case IR_BSHR - IR_ADD: return (int64_t)x >> (int64_t)y; break;
+  
   default: return x;
   }
 }
 
 int64_t lj_vm_foldbitwise(int64_t x, int64_t y, int op)
 {
-  switch (op) {
-  case IR_BAND - IR_BAND: return x&y; break;
-  case IR_BOR  - IR_BAND: return x|y; break;
-  case IR_BXOR - IR_BAND: return x^y; break;
-  case IR_BSHL - IR_BAND: return x<<y; break;
-  case IR_BSHR - IR_BAND: return x>>y; break;
-  default: return ~x; /* IR_BNOT */
-  }
+	switch (op) {
+	case IR_BAND - IR_BAND: return x&y; break;
+	case IR_BOR - IR_BAND: return x | y; break;
+	case IR_BXOR - IR_BAND: return x^y; break;
+	case IR_BSHL - IR_BAND: return x << y; break;
+	case IR_BSHR - IR_BAND: return x >> y; break;
+	default: return ~x; /* IR_BNOT */
+	}
 }
 
 int32_t LJ_FASTCALL lj_vm_idivi(int32_t a, int32_t b)

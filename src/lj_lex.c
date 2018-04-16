@@ -329,8 +329,7 @@ static LexToken lex_scan(LexState *ls, TValue *tv)
 	}
       }
       /* Short comment "--.*\n". */
-      while (!lex_iseol(ls) && ls->c != LEX_EOF)
-	lex_next(ls);
+      while (!lex_iseol(ls) && ls->c != LEX_EOF) lex_next(ls);
       continue;
     case '[': {
       int sep = lex_skipeq(ls);
@@ -361,6 +360,9 @@ static LexToken lex_scan(LexState *ls, TValue *tv)
     case '~':
       lex_next(ls);
       if (ls->c != '=') return '~'; else { lex_next(ls); return TK_ne; }
+	case '!':
+	  lex_next(ls);
+	  if (ls->c != '=') return '!'; else { lex_next(ls); return TK_ne; }
     case ':':
       lex_next(ls);
       if (ls->c != ':') return ':'; else { lex_next(ls); return TK_label; }
@@ -368,6 +370,9 @@ static LexToken lex_scan(LexState *ls, TValue *tv)
     case '\'':
       lex_string(ls, tv);
       return TK_string;
+	case '|':
+	  lex_next(ls);
+	  return TK_lambda;
     case '.':
       if (lex_savenext(ls) == '.') {
 	lex_next(ls);

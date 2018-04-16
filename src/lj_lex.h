@@ -18,6 +18,7 @@
   _(repeat) _(return) _(then) _(true) _(until) _(while) \
   __(idiv, idiv) __(concat, ..) __(dots, ...) __(eq, ==) __(ge, >=) __(le, <=) __(ne, ~=) \
   __(shl, <<) __(shr, >>) \
+  __(lambda, |) \
   __(label, ::) __(number, <number>) __(name, <name>) __(string, <string>) \
   __(eof, <eof>)
 

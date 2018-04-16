@@ -1314,60 +1314,60 @@ static void build_subroutines(BuildCtx *ctx)
   |
   |//-- Bitwise metamethods ---------------------------------------------
   |
-  |->vmeta_bitwise_vn:
-  |  lea RC, [KBASE+RC*8]
-  |  jmp >3
-  |
-  |->vmeta_bitwise_nv:
-  |  lea RC, [KBASE+RC*8]
-  |  lea RB, [BASE+RB*8]
-  |  xchg RB, RC
-  |  jmp >4
-  |
-  |->vmeta_bnot:
-  |  lea RC, [BASE+RD*8]
-  |  mov RB, RC
-  |  jmp >4
-  |
-  |->vmeta_bitwise_vv:
-  |  lea RC, [BASE+RC*8]
-  |3:
-  |  lea RB, [BASE+RB*8]
-  |4:
-  |  lea RA, [BASE+RA*8]
-  |.if X64WIN
-  |  mov CARG3d, RB
-  |  mov CARG4d, RC
-  |  movzx RC, PC_OP
-  |  mov ARG5d, RC
-  |  mov L:RB, SAVE_L
-  |  mov L:RB->base, BASE		// Caveat: CARG2d == BASE.
-  |  mov CARG2d, RA
-  |  mov CARG1d, L:RB			// Caveat: CARG1d == RA.
-  |.elif X64
-  |  movzx CARG5d, PC_OP
-  |  mov CARG2d, RA
-  |  mov CARG4d, RC			// Caveat: CARG4d == RA.
-  |  mov L:CARG1d, SAVE_L
-  |  mov L:CARG1d->base, BASE		// Caveat: CARG3d == BASE.
-  |  mov CARG3d, RB
-  |  mov L:RB, L:CARG1d
-  |.else
-  |  mov ARG3, RB
-  |  mov L:RB, SAVE_L
-  |  mov ARG4, RC
-  |  movzx RC, PC_OP
-  |  mov ARG2, RA
-  |  mov ARG5, RC
-  |  mov ARG1, L:RB
-  |  mov L:RB->base, BASE
-  |.endif
-  |  mov SAVE_PC, PC
-  |  call extern lj_meta_bitwise	// (lua_State *L, TValue *ra,*rb,*rc, BCReg op)
-  |  // NULL (finished) or TValue * (metamethod) returned in eax (RC).
-  |  mov BASE, L:RB->base
-  |  test RC, RC
-  |  jz ->cont_nop
+  |// ->vmeta_bitwise_vn:
+  |//   lea RC, [KBASE+RC*8]
+  |//   jmp >3
+  |// 
+  |// ->vmeta_bitwise_nv:
+  |//   lea RC, [KBASE+RC*8]
+  |//   lea RB, [BASE+RB*8]
+  |//   xchg RB, RC
+  |//   jmp >4
+  |// 
+  |// ->vmeta_bnot:
+  |//   lea RC, [BASE+RD*8]
+  |//   mov RB, RC
+  |//   jmp >4
+  |// 
+  |// ->vmeta_bitwise_vv:
+  |//   lea RC, [BASE+RC*8]
+  |// 3:
+  |//   lea RB, [BASE+RB*8]
+  |// 4:
+  |//   lea RA, [BASE+RA*8]
+  |// .if X64WIN
+  |//   mov CARG3d, RB
+  |//   mov CARG4d, RC
+  |//   movzx RC, PC_OP
+  |//   mov ARG5d, RC
+  |//   mov L:RB, SAVE_L
+  |//   mov L:RB->base, BASE		// Caveat: CARG2d == BASE.
+  |//   mov CARG2d, RA
+  |//   mov CARG1d, L:RB			// Caveat: CARG1d == RA.
+  |// .elif X64
+  |//   movzx CARG5d, PC_OP
+  |//   mov CARG2d, RA
+  |//   mov CARG4d, RC			// Caveat: CARG4d == RA.
+  |//   mov L:CARG1d, SAVE_L
+  |//   mov L:CARG1d->base, BASE		// Caveat: CARG3d == BASE.
+  |//   mov CARG3d, RB
+  |//   mov L:RB, L:CARG1d
+  |// .else
+  |//   mov ARG3, RB
+  |//   mov L:RB, SAVE_L
+  |//   mov ARG4, RC
+  |//   movzx RC, PC_OP
+  |//   mov ARG2, RA
+  |//   mov ARG5, RC
+  |//   mov ARG1, L:RB
+  |//   mov L:RB->base, BASE
+  |// .endif
+  |//   mov SAVE_PC, PC
+  |//   call extern lj_meta_bitwise	// (lua_State *L, TValue *ra,*rb,*rc, BCReg op)
+  |//   // NULL (finished) or TValue * (metamethod) returned in eax (RC).
+  |//   mov BASE, L:RB->base
+  |//   test RC, RC
+  |//   jz ->cont_nop
   |
   |  // Call metamethod for binary op.
   |->vmeta_binop:
@@ -3841,7 +3841,7 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     break;
   case BC_BNOT:
     |  ins_AD	// RA = dst, RD = src
-    |  checkint RD, ->vmeta_bnot
+  //  |  checkint RD, ->vmeta_bnot
     |  not RD
     |  mov [BASE+RA*8+4], RD
     |  ins_next
@@ -4026,20 +4026,20 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     ||vk = ((int)op - BC_ADDVN) / (BC_ADDNV-BC_ADDVN);
     ||switch (vk) {
     ||case 0:
-    |   checkint RB, ->vmeta_bitwise_vn
-    |   cmp dword [KBASE+RC*8+4], LJ_TISNUM; jne ->vmeta_bitwise_vn
+    |   checkint RB, ->vmeta_arith_vn
+    |   cmp dword [KBASE+RC*8+4], LJ_TISNUM; jne ->vmeta_arith_vn
     |   mov RB, [BASE+RB*8]
     |   intins RB, [KBASE+RC*8]
     ||  break;
     ||case 1:
-    |   checkint RB, ->vmeta_bitwise_nv
-    |   cmp dword [KBASE+RC*8+4], LJ_TISNUM; jne ->vmeta_bitwise_nv
+    |   checkint RB, ->vmeta_arith_nv
+    |   cmp dword [KBASE+RC*8+4], LJ_TISNUM; jne ->vmeta_arith_nv
     |   mov RC, [KBASE+RC*8]
     |   intins RC, [BASE+RB*8]
     ||  break;
     ||default:
-    |   checkint RB, ->vmeta_bitwise_vv
-    |   checkint RC, ->vmeta_bitwise_vv
+    |   checkint RB, ->vmeta_arith_vv
+    |   checkint RC, ->vmeta_arith_vv
     |   mov RB, [BASE+RB*8]
     |   intins RB, [BASE+RC*8]
     ||  break;
@@ -4069,22 +4069,22 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     ||vk = ((int)op - BC_ADDVN) / (BC_ADDNV-BC_ADDVN);
     ||switch (vk) {
     ||case 0:
-    |   checkint RB, ->vmeta_bitwise_vn
-    |   cmp dword [KBASE+RC*8+4], LJ_TISNUM; jne ->vmeta_bitwise_vn
+    |   checkint RB, ->vmeta_arith_vn
+    |   cmp dword [KBASE+RC*8+4], LJ_TISNUM; jne ->vmeta_arith_vn
     |   mov RB, [BASE+RB*8]
     |   mov RA, [KBASE+RC*8]
     |   intins RB, cl
     ||  break;
     ||case 1:
-    |   checkint RB, ->vmeta_bitwise_nv
-    |   cmp dword [KBASE+RC*8+4], LJ_TISNUM; jne ->vmeta_bitwise_nv
+    |   checkint RB, ->vmeta_arith_nv
+    |   cmp dword [KBASE+RC*8+4], LJ_TISNUM; jne ->vmeta_arith_nv
     |   mov RC, [KBASE+RC*8]
     |   mov RA, [BASE+RB*8]
     |   intins RC, cl
     ||  break;
     ||default:
-    |   checkint RB, ->vmeta_bitwise_vv
-    |   checkint RC, ->vmeta_bitwise_vv
+    |   checkint RB, ->vmeta_arith_vv
+    |   checkint RC, ->vmeta_arith_vv
     |   mov RB, [BASE+RB*8]
     |   mov RA, [BASE+RC*8]
     |   intins RB, cl

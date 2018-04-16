@@ -167,6 +167,7 @@ LJ_STATIC_ASSERT((int)BC_SUBVV-(int)BC_ADDVV == (int)OPR_SUB-(int)OPR_ADD);
 LJ_STATIC_ASSERT((int)BC_MULVV-(int)BC_ADDVV == (int)OPR_MUL-(int)OPR_ADD);
 LJ_STATIC_ASSERT((int)BC_DIVVV-(int)BC_ADDVV == (int)OPR_DIV-(int)OPR_ADD);
 LJ_STATIC_ASSERT((int)BC_MODVV-(int)BC_ADDVV == (int)OPR_MOD-(int)OPR_ADD);
+LJ_STATIC_ASSERT((int)BC_SHLVV - (int)BC_ADDVV == (int)OPR_SHL - (int)OPR_ADD);
 
 /* -- Error handling ------------------------------------------------------ */
 
@@ -1915,14 +1916,15 @@ static void expr_table(LexState *ls, ExpDesc *e)
 }
 
 /* Parse function parameters. */
-static BCReg parse_params(LexState *ls, int needself)
+static BCReg parse_params(LexState *ls, int needself, int islambda)
 {
   FuncState *fs = ls->fs;
   BCReg nparams = 0;
-  lex_check(ls, '(');
+  if(!islambda)
+	  lex_check(ls, '(');
   if (needself)
     var_new_lit(ls, nparams++, "self");
-  if (ls->tok != ')') {
+  if (ls->tok != (islambda ? TK_lambda : ')')) {
     do {
       if (ls->tok == TK_name || (!LJ_52 && ls->tok == TK_goto)) {
 	var_new(ls, nparams++, lex_str(ls));
@@ -1938,12 +1940,60 @@ static BCReg parse_params(LexState *ls, int needself)
   var_add(ls, nparams);
   lua_assert(fs->nactvar == nparams);
   bcreg_reserve(fs, nparams);
-  lex_check(ls, ')');
+  lex_check(ls, islambda ? TK_lambda : ')');
   return nparams;
 }
 
 /* Forward declaration. */
+#define synlevel_end(ls)	((ls)->level--)
 static void parse_chunk(LexState *ls);
+static void synlevel_begin(LexState *ls);
+static void parse_return(LexState* ls, int skipReturn);
+
+/* Parse body of a lambda */
+static void parse_lambda(LexState* ls, ExpDesc* e, int needself, BCLine line) {//needself added in case the syntax for it is ever added
+	FuncState fs, *pfs = ls->fs;
+	FuncScope bl;
+	GCproto *pt;
+	ptrdiff_t oldbase = pfs->bcbase - ls->bcstack;
+	fs_init(ls, &fs);
+	fscope_begin(&fs, &bl, 0);
+	fs.linedefined = line;
+	fs.numparams = (uint8_t)parse_params(ls, needself, 1);
+	fs.bcbase = pfs->bcbase + pfs->pc;
+	fs.bclim = pfs->bclim - pfs->pc;
+
+	bcemit_AD(&fs, BC_FUNCF, 0, 0);  /* Placeholder. */
+	if (ls->tok == TK_do) {
+		lj_lex_next(ls);
+		parse_chunk(ls);
+		if (ls->tok != TK_end) lex_match(ls, TK_end, TK_lambda, line);
+	}
+	else {
+		synlevel_begin(ls);
+		parse_return(ls, 0);
+		lua_assert(ls->fs->framesize >= ls->fs->freereg &&
+			ls->fs->freereg >= ls->fs->nactvar);
+		ls->fs->freereg = ls->fs->nactvar;  /* Free registers after each stmt. */
+		synlevel_end(ls);
+	}
+	
+	pt = fs_finish(ls, (ls->lastline = ls->linenumber));
+	pfs->bcbase = ls->bcstack + oldbase;  /* May have been reallocated. */
+	pfs->bclim = (BCPos)(ls->sizebcstack - oldbase);
+	/* Store new prototype in the constant array of the parent. */
+	expr_init(e, VRELOCABLE,
+		bcemit_AD(pfs, BC_FNEW, 0, const_gc(pfs, obj2gco(pt), LJ_TPROTO)));
+#if LJ_HASFFI
+	pfs->flags |= (fs.flags & PROTO_FFI);
+#endif
+	if (!(pfs->flags & PROTO_CHILD)) {
+		if (pfs->flags & PROTO_HAS_RETURN)
+			pfs->flags |= PROTO_FIXUP_RETURN;
+		pfs->flags |= PROTO_CHILD;
+	}
+	lj_lex_next(ls);
+}
 
 /* Parse body of a function. */
 static void parse_body(LexState *ls, ExpDesc *e, int needself, BCLine line)
@@ -1955,7 +2005,7 @@ static void parse_body(LexState *ls, ExpDesc *e, int needself, BCLine line)
   fs_init(ls, &fs);
   fscope_begin(&fs, &bl, 0);
   fs.linedefined = line;
-  fs.numparams = (uint8_t)parse_params(ls, needself);
+  fs.numparams = (uint8_t)parse_params(ls, needself, 0);
   fs.bcbase = pfs->bcbase + pfs->pc;
   fs.bclim = pfs->bclim - pfs->pc;
   bcemit_AD(&fs, BC_FUNCF, 0, 0);  /* Placeholder. */
@@ -2116,6 +2166,10 @@ static void expr_simple(LexState *ls, ExpDesc *v)
     lj_lex_next(ls);
     parse_body(ls, v, 0, ls->linenumber);
     return;
+  case TK_lambda:
+	lj_lex_next(ls);
+	parse_lambda(ls, v, 0, ls->linenumber);
+	return;
   default:
     expr_primary(ls, v);
     return;
@@ -2129,8 +2183,6 @@ static void synlevel_begin(LexState *ls)
   if (++ls->level >= LJ_MAX_XLEVEL)
     lj_lex_error(ls, 0, LJ_ERR_XLEVELS);
 }
-
-#define synlevel_end(ls)	((ls)->level--)
 
 /* Convert token to binary operator. */
 static BinOpr token2binop(LexToken tok)
@@ -2185,14 +2237,14 @@ static BinOpr expr_binop(LexState *ls, ExpDesc *v, uint32_t limit);
 static void expr_unop(LexState *ls, ExpDesc *v)
 {
   BCOp op;
-  if (ls->tok == TK_not) {
+  if (ls->tok == TK_not || ls->tok == '!') {
     op = BC_NOT;
   } else if (ls->tok == '-') {
     op = BC_UNM;
   } else if (ls->tok == '#') {
     op = BC_LEN;
   } else if (ls->tok == '~') {
-    op = BC_BNOT;
+	  op = BC_BNOT;
   } else {
     expr_simple(ls, v);
     return;
@@ -2322,13 +2374,13 @@ static void parse_assignment(LexState *ls, LHSVarList *lh, BCReg nvars)
     nexps = expr_list(ls, &e);
     if (nexps == nvars) {
       if (e.k == VCALL) {
-	if (bc_op(*bcptr(ls->fs, &e)) == BC_VARG) {  /* Vararg assignment. */
-	  ls->fs->freereg--;
-	  e.k = VRELOCABLE;
-	} else {  /* Multiple call results. */
-	  e.u.s.info = e.u.s.aux;  /* Base of call is not relocatable. */
-	  e.k = VNONRELOC;
-	}
+		if (bc_op(*bcptr(ls->fs, &e)) == BC_VARG) {  /* Vararg assignment. */
+		  ls->fs->freereg--;
+		  e.k = VRELOCABLE;
+		} else {  /* Multiple call results. */
+		  e.u.s.info = e.u.s.aux;  /* Base of call is not relocatable. */
+		  e.k = VNONRELOC;
+		}
       }
       bcemit_store(ls->fs, &lh->v, &e);
       return;
@@ -2423,11 +2475,12 @@ static int parse_isend(LexToken tok)
 }
 
 /* Parse 'return' statement. */
-static void parse_return(LexState *ls)
+static void parse_return(LexState *ls, int skipReturn)
 {
   BCIns ins;
   FuncState *fs = ls->fs;
-  lj_lex_next(ls);  /* Skip 'return'. */
+  if(skipReturn)
+	  lj_lex_next(ls);  /* Skip 'return'. */
   fs->flags |= PROTO_HAS_RETURN;
   if (parse_isend(ls->tok) || ls->tok == ';') {  /* Bare return. */
     ins = BCINS_AD(BC_RET0, 0, 1);
@@ -2773,13 +2826,12 @@ static int parse_stmt(LexState *ls)
     break;
   case TK_function:
     parse_func(ls, line);
-    break;
   case TK_local:
     lj_lex_next(ls);
     parse_local(ls);
     break;
   case TK_return:
-    parse_return(ls);
+    parse_return(ls, 1);
     return 1;  /* Must be last. */
   case TK_break:
     lj_lex_next(ls);
