@@ -1968,6 +1968,7 @@ static void parse_lambda(LexState* ls, ExpDesc* e, int needself, BCLine line) {/
 		lj_lex_next(ls);
 		parse_chunk(ls);
 		if (ls->tok != TK_end) lex_match(ls, TK_end, TK_lambda, line);
+		lj_lex_next(ls);
 	}
 	else {
 		synlevel_begin(ls);
@@ -1992,7 +1993,7 @@ static void parse_lambda(LexState* ls, ExpDesc* e, int needself, BCLine line) {/
 			pfs->flags |= PROTO_FIXUP_RETURN;
 		pfs->flags |= PROTO_CHILD;
 	}
-	lj_lex_next(ls);
+	
 }
 
 /* Parse body of a function. */
