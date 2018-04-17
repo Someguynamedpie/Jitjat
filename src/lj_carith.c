@@ -189,6 +189,11 @@ static int carith_int64(lua_State *L, CTState *cts, CDArith *ca, MMS mm)
     case MM_add: *up = u0 + u1; break;
     case MM_sub: *up = u0 - u1; break;
     case MM_mul: *up = u0 * u1; break;
+	case MM_shl: *up = u0 << u1; break;
+	case MM_shr: *up = u0 >> u1; break;
+	case MM_band: *up = u0 & u1; break;
+	case MM_bor: *up = u0 | u1; break;
+	case MM_bxor: *up = u0 ^ u1; break;
     case MM_div:
       if (id == CTID_INT64)
 	*up = (uint64_t)lj_carith_divi64((int64_t)u0, (int64_t)u1);
@@ -207,6 +212,7 @@ static int carith_int64(lua_State *L, CTState *cts, CDArith *ca, MMS mm)
       else
 	*up = lj_carith_powu64(u0, u1);
       break;
+	case MM_bnot: *up = ~(int64_t)u0; break;
     case MM_unm: *up = (uint64_t)-(int64_t)u0; break;
     default: lua_assert(0); break;
     }

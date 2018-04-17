@@ -831,7 +831,7 @@ static int foldbitwise(FuncState *fs, BinOpr opr, ExpDesc *e1, ExpDesc *e2)
     GCcdata *cd1 = cdataV(&e1->u.nval);
     *(int64_t *)cdataptr(cd1) = n;
   } else if (e2->k == VKCDATA) {
-    GCcdata *cd2 = cdataV(&e1->u.nval);
+    GCcdata *cd2 = cdataV(&e2->u.nval);
     *(int64_t *)cdataptr(cd2) = n;
     memcpy(e1, e2, sizeof(ExpDesc));
   } else

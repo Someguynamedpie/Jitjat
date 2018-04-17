@@ -257,9 +257,12 @@ LJLIB_CF(ffi_meta___mul)	LJLIB_REC(cdata_arith MM_mul)
   return ffi_arith(L);
 }
 
-LJLIB_CF(ffi_meta___div)	LJLIB_REC(cdata_arith MM_div)
-{
-  return ffi_arith(L);
+LJLIB_CF(ffi_meta___div)	LJLIB_REC(cdata_arith MM_div) {
+	return ffi_arith(L);
+}
+
+LJLIB_CF(ffi_meta___idiv)	LJLIB_REC(cdata_arith MM_idiv) {
+	return ffi_arith(L);//should assert, but this shouldnt be called unless theres BC tampering.
 }
 
 LJLIB_CF(ffi_meta___mod)	LJLIB_REC(cdata_arith MM_mod)
@@ -267,15 +270,38 @@ LJLIB_CF(ffi_meta___mod)	LJLIB_REC(cdata_arith MM_mod)
   return ffi_arith(L);
 }
 
-LJLIB_CF(ffi_meta___pow)	LJLIB_REC(cdata_arith MM_pow)
-{
-  return ffi_arith(L);
+LJLIB_CF(ffi_meta___band)	LJLIB_REC(cdata_arith MM_band) {
+	return ffi_arith(L);
 }
 
-LJLIB_CF(ffi_meta___unm)	LJLIB_REC(cdata_arith MM_unm)
-{
-  return ffi_arith(L);
+LJLIB_CF(ffi_meta___bor)	LJLIB_REC(cdata_arith MM_bor) {
+	return ffi_arith(L);
 }
+
+LJLIB_CF(ffi_meta___bxor)	LJLIB_REC(cdata_arith MM_bxor) {
+	return ffi_arith(L);
+}
+
+LJLIB_CF(ffi_meta___shl)	LJLIB_REC(cdata_arith MM_shl) {
+	return ffi_arith(L);
+}
+
+LJLIB_CF(ffi_meta___shr)	LJLIB_REC(cdata_arith MM_shr) {
+	return ffi_arith(L);
+}
+
+LJLIB_CF(ffi_meta___pow)	LJLIB_REC(cdata_arith MM_pow) {
+	return ffi_arith(L);
+}
+
+LJLIB_CF(ffi_meta___bnot)	LJLIB_REC(cdata_arith MM_bnot) {
+	return ffi_arith(L);
+}
+
+LJLIB_CF(ffi_meta___bunm)	LJLIB_REC(cdata_arith MM_unm) {
+	return ffi_arith(L);
+}
+
 /* End of contiguous ORDER MM. */
 
 LJLIB_CF(ffi_meta___tostring)

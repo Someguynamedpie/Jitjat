@@ -54,16 +54,16 @@ double lj_vm_foldarith(double x, double y, int op)
   case IR_MIN - IR_ADD: return x > y ? y : x; break;
   case IR_MAX - IR_ADD: return x < y ? y : x; break;
 #endif
-  case IR_BAND - IR_ADD: return (int64_t)x&(int64_t)y; break;
-  case IR_BOR - IR_ADD: return (int64_t)x | (int64_t)y; break;
+  case IR_BAND - IR_ADD: return (int64_t)x&(int64_t)y; break;//the smallest integer type that can be fit in the double's 2^53 mantissa
+  case IR_BOR - IR_ADD: return (int64_t)x | (int64_t)y; break;//it's not ideal because annoying compilers will whine about the loss of data
   case IR_BXOR - IR_ADD: return (int64_t)x^ (int64_t)y; break;
   case IR_BSHL - IR_ADD: return (int64_t)x << (int64_t)y; break;
   case IR_BSHR - IR_ADD: return (int64_t)x >> (int64_t)y; break;
-  
+  case IR_BNOT - IR_ADD: return ~(int64_t)x; break;
   default: return x;
   }
 }
-
+// pretty much exclusively used for folding.
 int64_t lj_vm_foldbitwise(int64_t x, int64_t y, int op)
 {
 	switch (op) {

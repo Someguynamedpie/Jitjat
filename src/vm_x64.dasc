@@ -1105,6 +1105,21 @@ static void build_subroutines(BuildCtx *ctx)
   |  mov NARGS:RDd, 2+1			// 2 args for func(o1, o2).
   |  jmp ->vm_call_dispatch
   |
+  |->vmeta_bnot:
+  | lea RC, [BASE+RD*8]
+  | mov RB, RC
+  | jmp <2
+  |//->vmeta_bnot:
+  |//  movzx RDd, PC_RD
+  |//  mov L:RB, SAVE_L
+  |//  mov L:RB->base, BASE
+  |//  lea CARG2, [BASE+RD*8]		// Caveat: CARG2 == BASE
+  |//  mov L:CARG1, L:RB
+  |//  mov SAVE_PC, PC
+  |//  call extern lj_meta_bnot		// (lua_State *L, TValue *o)
+  |//  mov BASE, L:RB->base
+  |//  jmp ->vmeta_binop
+  |
   |->vmeta_len:
   |  movzx RDd, PC_RD
   |  mov L:RB, SAVE_L
@@ -1253,6 +1268,16 @@ static void build_subroutines(BuildCtx *ctx)
   |  cmp RCd, RBd
   |  cmovb RCd, RBd
   |  not RCd
+  |  //cmp RC, LJ_TTAB
+  |  //jne >2
+  |  // Get the __type metamethod value
+  |  // mov TAB:RD, [BASE]
+  |  // mov TAB:RD, TAB:RD->metatable
+  |  // test TAB:RD, TAB:RD
+  |  // jz >2 //no metatable, so just return "table"
+  |  // mov [BASE-16], [DISPATCH+DISPATCH_GL(gcroot)+8*(GCROOT_MMNAME+MM_type)] // store __type for returning
+  |  // 
+  |  // jmp ->fff_res1 // return it
   |2:
   |  mov CFUNC:RB, [BASE-16]
   |  cleartp CFUNC:RB
@@ -3268,7 +3293,7 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     break;
   case BC_BNOT:
     |  ins_AD	// RA = dst, RD = src
-    |//  checkint RD, ->vmeta_bnot
+    |  checkint RD, ->vmeta_bnot
     |  not RD
     |  mov [BASE+RA*8+8], RD
     |  ins_next

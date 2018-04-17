@@ -1379,6 +1379,11 @@ static void build_subroutines(BuildCtx *ctx)
   |  mov NARGS:RD, 2+1			// 2 args for func(o1, o2).
   |  jmp ->vm_call_dispatch
   |
+  |->vmeta_bnot:
+  |  lea RC, [BASE+RD*8]
+  |  mov RB, RC
+  |  jmp <2
+  |
   |->vmeta_len:
   |  mov L:RB, SAVE_L
   |  mov L:RB->base, BASE
@@ -3841,7 +3846,7 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     break;
   case BC_BNOT:
     |  ins_AD	// RA = dst, RD = src
-  //  |  checkint RD, ->vmeta_bnot
+    |  checkint RD, ->vmeta_bnot
     |  not RD
     |  mov [BASE+RA*8+4], RD
     |  ins_next

@@ -54,14 +54,13 @@
   _(KSLOT,	N , ref, lit) \
   \
   /* Bit ops. */ \
-  _(BNOT,	N , ref, ___) \
   _(BSWAP,	N , ref, ___) \
   _(BSAR,	N , ref, ref) \
   _(BROL,	N , ref, ref) \
   _(BROR,	N , ref, ref) \
   \
   /* Arithmetic ops. ORDER ARITH_(add) _(sub) _(mul) _(div) _(idiv) _(mod) \
-  _(band) _(bor) _(bxor) _(shl) _(shr) _(pow) \ */ \
+  _(band) _(bor) _(bxor) _(shl) _(shr) _(pow) \ */\
   _(ADD,	C , ref, ref) \
   _(SUB,	N , ref, ref) \
   _(MUL,	C , ref, ref) \
@@ -75,6 +74,7 @@
   _(BSHR,	N , ref, ref) \
   _(POW,	N , ref, ref) \
   _(NEG,	N , ref, ref) \
+  _(BNOT,	N , ref, ___) /*bitwise operators moved down to match ORDER ARITH*/\
   \
   _(ABS,	N , ref, ref) \
   _(ATAN2,	N , ref, ref) \
