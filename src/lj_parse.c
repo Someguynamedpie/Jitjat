@@ -2827,6 +2827,7 @@ static int parse_stmt(LexState *ls)
     break;
   case TK_function:
     parse_func(ls, line);
+	break;
   case TK_local:
     lj_lex_next(ls);
     parse_local(ls);
