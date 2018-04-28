@@ -2371,23 +2371,10 @@ static void parse_assignment(LexState *ls, LHSVarList *lh, BCReg nvars)
     parse_assignment(ls, &vl, nvars+1);
   } else {  /* Parse RHS. */
     BCReg nexps;
-	int add = 0;
-	if (lex_opt(ls, '+')) {
-		lex_check(ls, '=');
-		add = 1;
-	}else
-		lex_check(ls, '=');
-    nexps = expr_list(ls, &e);
-	if (add && nvars == 1 && nexps == 1) {
-		assign_adjust(ls, nvars, nexps, &e);
-		auto varreg = expr_toanyreg(ls->fs, &lh->v);
-		auto retreg = expr_toanyreg(ls->fs, &e);
-		bcemit_ABC(ls->fs, BC_ADDVV, 0, varreg, retreg);
-		bcemit_INS(ls->fs, BCINS_AD(BC_GSET, varreg, lh->v.u.s.info));
-		return;
-	}
-    if (nexps == nvars) {
-      if (e.k == VCALL) {
+	lex_check(ls, '=');
+    	nexps = expr_list(ls, &e);
+    	if (nexps == nvars) {
+	if (e.k == VCALL) {
 		if (bc_op(*bcptr(ls->fs, &e)) == BC_VARG) {  /* Vararg assignment. */
 		  ls->fs->freereg--;
 		  e.k = VRELOCABLE;
