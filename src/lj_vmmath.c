@@ -13,16 +13,29 @@
 #include "lj_ir.h"
 #include "lj_vm.h"
 
-/* -- Helper functions for generated machine code ------------------------- */
+/* -- Wrapper functions --------------------------------------------------- */
 
-#if LJ_TARGET_X86ORX64
-/* Wrapper functions to avoid linker issues on OSX. */
-LJ_FUNCA double lj_vm_sinh(double x) { return sinh(x); }
-LJ_FUNCA double lj_vm_cosh(double x) { return cosh(x); }
-LJ_FUNCA double lj_vm_tanh(double x) { return tanh(x); }
+#if LJ_TARGET_X86 && __ELF__ && __PIC__
+/* Wrapper functions to deal with the ELF/x86 PIC disaster. */
+LJ_FUNCA double lj_wrap_log(double x) { return log(x); }
+LJ_FUNCA double lj_wrap_log10(double x) { return log10(x); }
+LJ_FUNCA double lj_wrap_exp(double x) { return exp(x); }
+LJ_FUNCA double lj_wrap_sin(double x) { return sin(x); }
+LJ_FUNCA double lj_wrap_cos(double x) { return cos(x); }
+LJ_FUNCA double lj_wrap_tan(double x) { return tan(x); }
+LJ_FUNCA double lj_wrap_asin(double x) { return asin(x); }
+LJ_FUNCA double lj_wrap_acos(double x) { return acos(x); }
+LJ_FUNCA double lj_wrap_atan(double x) { return atan(x); }
+LJ_FUNCA double lj_wrap_sinh(double x) { return sinh(x); }
+LJ_FUNCA double lj_wrap_cosh(double x) { return cosh(x); }
+LJ_FUNCA double lj_wrap_tanh(double x) { return tanh(x); }
+LJ_FUNCA double lj_wrap_atan2(double x, double y) { return atan2(x, y); }
+LJ_FUNCA double lj_wrap_pow(double x, double y) { return pow(x, y); }
+LJ_FUNCA double lj_wrap_fmod(double x, double y) { return fmod(x, y); }
 #endif
 
-#if !LJ_TARGET_X86ORX64
+/* -- Helper functions for generated machine code ------------------------- */
+
 double lj_vm_foldarith(double x, double y, int op)
 {
   switch (op) {
@@ -30,6 +43,7 @@ double lj_vm_foldarith(double x, double y, int op)
   case IR_SUB - IR_ADD: return x-y; break;
   case IR_MUL - IR_ADD: return x*y; break;
   case IR_DIV - IR_ADD: return x/y; break;
+  case IR_IDIV - IR_ADD: return lj_vm_floor(x/y); break;
   case IR_MOD - IR_ADD: return x-lj_vm_floor(x/y)*y; break;
   case IR_POW - IR_ADD: return pow(x, y); break;
   case IR_NEG - IR_ADD: return -x; break;
@@ -40,8 +54,50 @@ double lj_vm_foldarith(double x, double y, int op)
   case IR_MIN - IR_ADD: return x > y ? y : x; break;
   case IR_MAX - IR_ADD: return x < y ? y : x; break;
 #endif
+  case IR_BAND - IR_ADD: return (int64_t)x&(int64_t)y; break;//the smallest integer type that can be fit in the double's 2^53 mantissa
+  case IR_BOR - IR_ADD: return (int64_t)x | (int64_t)y; break;//it's not ideal because annoying compilers will whine about the loss of data
+  case IR_BXOR - IR_ADD: return (int64_t)x^ (int64_t)y; break;
+  case IR_BSHL - IR_ADD: return (int64_t)x << (int64_t)y; break;
+  case IR_BSHR - IR_ADD: return (int64_t)x >> (int64_t)y; break;
+  case IR_BNOT - IR_ADD: return ~(int64_t)x; break;
   default: return x;
   }
+}
+// pretty much exclusively used for folding.
+int64_t lj_vm_foldbitwise(int64_t x, int64_t y, int op)
+{
+	switch (op) {
+	case IR_BAND - IR_BAND: return x&y; break;
+	case IR_BOR - IR_BAND: return x | y; break;
+	case IR_BXOR - IR_BAND: return x^y; break;
+	case IR_BSHL - IR_BAND: return x << y; break;
+	case IR_BSHR - IR_BAND: return x >> y; break;
+	default: return ~x; /* IR_BNOT */
+	}
+}
+
+int32_t LJ_FASTCALL lj_vm_idivi(int32_t a, int32_t b)
+{
+  uint32_t y, ua, ub;
+  lua_assert(b != 0);  /* This must be checked before using this function. */
+  ua = a < 0 ? (uint32_t)-a : (uint32_t)a;
+  ub = b < 0 ? (uint32_t)-b : (uint32_t)b;
+  y = ua / ub;
+  if ((a^b) < 0) y = -y;
+  return (int32_t)y;
+}
+
+#if (LJ_HASJIT && !(LJ_TARGET_ARM || LJ_TARGET_ARM64 || LJ_TARGET_PPC)) || LJ_TARGET_MIPS
+int32_t LJ_FASTCALL lj_vm_modi(int32_t a, int32_t b)
+{
+  uint32_t y, ua, ub;
+  lua_assert(b != 0);  /* This must be checked before using this function. */
+  ua = a < 0 ? (uint32_t)-a : (uint32_t)a;
+  ub = b < 0 ? (uint32_t)-b : (uint32_t)b;
+  y = ua % ub;
+  if (y != 0 && (a^b) < 0) y = y - ub;
+  if (((int32_t)y^b) < 0) y = (uint32_t)-(int32_t)y;
+  return (int32_t)y;
 }
 #endif
 
@@ -58,20 +114,6 @@ double lj_vm_log2(double a)
 double lj_vm_exp2(double a)
 {
   return exp(a * 0.6931471805599453);
-}
-#endif
-
-#if !(LJ_TARGET_ARM || LJ_TARGET_PPC)
-int32_t LJ_FASTCALL lj_vm_modi(int32_t a, int32_t b)
-{
-  uint32_t y, ua, ub;
-  lua_assert(b != 0);  /* This must be checked before using this function. */
-  ua = a < 0 ? (uint32_t)-a : (uint32_t)a;
-  ub = b < 0 ? (uint32_t)-b : (uint32_t)b;
-  y = ua % ub;
-  if (y != 0 && (a^b) < 0) y = y - ub;
-  if (((int32_t)y^b) < 0) y = (uint32_t)-(int32_t)y;
-  return (int32_t)y;
 }
 #endif
 
@@ -107,6 +149,7 @@ double lj_vm_powi(double x, int32_t k)
   else
     return 1.0 / lj_vm_powui(x, (uint32_t)-k);
 }
+#endif
 
 /* Computes fpm(x) for extended math functions. */
 double lj_vm_foldfpm(double x, int fpm)
@@ -128,7 +171,6 @@ double lj_vm_foldfpm(double x, int fpm)
   }
   return 0;
 }
-#endif
 
 #if LJ_HASFFI
 int lj_vm_errno(void)

@@ -89,31 +89,52 @@
   _(ISFC,	dst,	___,	var,	___) \
   _(IST,	___,	___,	var,	___) \
   _(ISF,	___,	___,	var,	___) \
+  _(ISTYPE,	var,	___,	lit,	___) \
+  _(ISNUM,	var,	___,	lit,	___) \
   \
   /* Unary ops. */ \
   _(MOV,	dst,	___,	var,	___) \
   _(NOT,	dst,	___,	var,	___) \
   _(UNM,	dst,	___,	var,	unm) \
   _(LEN,	dst,	___,	var,	len) \
+  _(BNOT,	dst,	___,	var,	bnot) \
   \
   /* Binary ops. ORDER OPR. VV last, POW must be next. */ \
   _(ADDVN,	dst,	var,	num,	add) \
   _(SUBVN,	dst,	var,	num,	sub) \
   _(MULVN,	dst,	var,	num,	mul) \
   _(DIVVN,	dst,	var,	num,	div) \
+  _(IDIVVN,	dst,	var,	num,	idiv) \
   _(MODVN,	dst,	var,	num,	mod) \
+  _(BANDVN,	dst,	var,	num,	band) \
+  _(BORVN,	dst,	var,	num,	bor) \
+  _(BXORVN,	dst,	var,	num,	bxor) \
+  _(SHLVN,	dst,	var,	num,	shl) \
+  _(SHRVN,	dst,	var,	num,	shr) \
   \
   _(ADDNV,	dst,	var,	num,	add) \
   _(SUBNV,	dst,	var,	num,	sub) \
   _(MULNV,	dst,	var,	num,	mul) \
   _(DIVNV,	dst,	var,	num,	div) \
+  _(IDIVNV,	dst,	var,	num,	idiv) \
   _(MODNV,	dst,	var,	num,	mod) \
+  _(BANDNV,	dst,	var,	num,	band) \
+  _(BORNV,	dst,	var,	num,	bor) \
+  _(BXORNV,	dst,	var,	num,	bxor) \
+  _(SHLNV,	dst,	var,	num,	shl) \
+  _(SHRNV,	dst,	var,	num,	shr) \
   \
   _(ADDVV,	dst,	var,	var,	add) \
   _(SUBVV,	dst,	var,	var,	sub) \
   _(MULVV,	dst,	var,	var,	mul) \
   _(DIVVV,	dst,	var,	var,	div) \
+  _(IDIVVV,	dst,	var,	var,	idiv) \
   _(MODVV,	dst,	var,	var,	mod) \
+  _(BANDVV,	dst,	var,	var,	band) \
+  _(BORVV,	dst,	var,	var,	bor) \
+  _(BXORVV,	dst,	var,	var,	bxor) \
+  _(SHLVV,	dst,	var,	var,	shl) \
+  _(SHRVV,	dst,	var,	var,	shr) \
   \
   _(POW,	dst,	var,	var,	pow) \
   _(CAT,	dst,	rbase,	rbase,	concat) \
@@ -143,10 +164,12 @@
   _(TGETV,	dst,	var,	var,	index) \
   _(TGETS,	dst,	var,	str,	index) \
   _(TGETB,	dst,	var,	lit,	index) \
+  _(TGETR,	dst,	var,	var,	index) \
   _(TSETV,	var,	var,	var,	newindex) \
   _(TSETS,	var,	var,	str,	newindex) \
   _(TSETB,	var,	var,	lit,	newindex) \
   _(TSETM,	base,	___,	num,	newindex) \
+  _(TSETR,	var,	var,	var,	newindex) \
   \
   /* Calls and vararg handling. T = tail call. */ \
   _(CALLM,	base,	lit,	lit,	call) \
